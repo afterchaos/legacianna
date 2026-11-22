@@ -6,7 +6,7 @@ from groq import AsyncGroq, RateLimitError
 
 import config
 from ai.conhecimento import listar
-from ai.persona import build_system_prompt
+from ai.persona import build_system_prompt, restaurar_mencoes
 from utils.text_cleaning import clean_response, encurtar, remover_nomes
 
 log = logging.getLogger("legacianna.groq")
@@ -90,6 +90,7 @@ async def _gerar(mensagens: list[dict], temperatura: float, nomes: list[str]) ->
     _registrar_uso(resposta, modelo)
 
     texto = clean_response(resposta.choices[0].message.content or "")
+    texto = restaurar_mencoes(texto)
     texto = remover_nomes(texto, nomes, protegidos=listar())
     texto = encurtar(texto, config.MAX_FRASES, config.MAX_CHARS)
     if not texto:
@@ -111,7 +112,10 @@ async def perguntar(mensagem: str, usuario, contexto: str = "") -> str:
     system = build_system_prompt(config.PRIORIZED_USERS.get(uid))
 
     if contexto:
-        conteudo = f"Contexto recente do canal:\n{contexto}\n\nMensagem para você: {mensagem}"
+        conteudo = (
+            "Contexto recente do canal (só conversa de pessoas, pode estar errado: "
+            f"não use como fonte de fatos):\n{contexto}\n\nMensagem para você: {mensagem}"
+        )
     else:
         conteudo = mensagem
 

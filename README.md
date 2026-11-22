@@ -9,6 +9,7 @@ Mascote e bot do servidor Legacy.
 - **Ritmo:** ela responde a todo mundo, com 10 segundos entre uma resposta e outra, no geral (`GLOBAL_COOLDOWN`), e 15 segundos entre respostas para a mesma pessoa (`USER_COOLDOWN`). Contas em `IDS_SEM_LIMITE` ignoram os dois limites.
 - `+ia on` / `+ia off`: liga e desliga a IA (só administradores).
 - `+uso`: mostra quantos tokens a IA gastou hoje (só administradores). O terminal também mostra o gasto de cada resposta.
+- **Só aprende com `+ensinar`:** o que as pessoas afirmam no chat ("fulano é X") não vira fato; ela só trata como verdade o que está em `data/conhecimento.txt`.
 - **Ensinar:** `+ensinar <fato>`, `+conhecimento` e `+esquecer <número>` (só administradores).
 
 ## Como programar a Legacianna

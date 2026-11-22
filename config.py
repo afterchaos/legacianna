@@ -26,8 +26,8 @@ PRIORIZED_USERS: dict[int, str] = {
 
 # ---------- IA ----------
 CHAT_TIMEOUT = 120      # segundos sem conversar até ela "esquecer" o papo com a pessoa
-MAX_HISTORY = 4         # quantas mensagens do papo (pessoa + bot) ela lembra
-CONTEXT_MESSAGES = 6    # quantas mensagens recentes do canal ela lê como contexto
+MAX_HISTORY = 2         # quantas mensagens do papo (pessoa + bot) ela lembra
+CONTEXT_MESSAGES = 3    # quantas mensagens recentes do canal ela lê como contexto
 USER_COOLDOWN = 15      # segundos entre respostas para a mesma pessoa
 GLOBAL_COOLDOWN = 10    # segundos entre uma resposta e outra, no geral (servidor inteiro)
 
@@ -51,7 +51,7 @@ PREFIXO_CLAN = "[Cl]"
 VARRER_AO_LIGAR = True  # ao ligar, corrige quem já está no servidor com "Guest" no nome
 
 # ---------- Status ----------
-STATUS_INTERVAL = 20  # segundos entre cada troca
+STATUS_INTERVAL = 60  # segundos entre cada troca
 STATUS = [
     ("playing", "Legacy 💖"),
     ("watching", "seus apelidos 👀"),

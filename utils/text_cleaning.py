@@ -11,9 +11,14 @@ def remove_extra_spaces(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def trocar_aka(text: str) -> str:
+    """A IA gosta de abreviar "também conhecido como" para "aka"; volta pro português."""
+    return re.sub(r"\baka\b", "também conhecido como", text, flags=re.IGNORECASE)
+
+
 def clean_response(text: str) -> str:
     """Limpa a resposta da IA antes de enviar."""
-    return remove_extra_spaces(remove_bold_markdown(text))
+    return remove_extra_spaces(trocar_aka(remove_bold_markdown(text)))
 
 
 def encurtar(text: str, max_frases: int = 2, max_chars: int = 200) -> str:
