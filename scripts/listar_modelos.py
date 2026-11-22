@@ -1,4 +1,4 @@
-"""Lista os modelos de chat disponíveis na sua conta da Groq. Rode: python listar_modelos.py"""
+"""Lista os modelos de chat disponíveis na sua conta da Groq. Rode: python scripts/listar_modelos.py"""
 import os
 
 from dotenv import load_dotenv

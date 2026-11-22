@@ -51,7 +51,7 @@ PREFIXO_CLAN = "[Cl]"
 VARRER_AO_LIGAR = True  # ao ligar, corrige quem já está no servidor com "Guest" no nome
 
 # ---------- Status ----------
-STATUS_INTERVAL = 60  # segundos entre cada troca
+STATUS_INTERVAL = 20  # segundos entre cada troca
 STATUS = [
     ("playing", "Legacy 💖"),
     ("watching", "seus apelidos 👀"),

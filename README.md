@@ -23,21 +23,39 @@ Mascote e bot do servidor Legacy.
 5. `python main.py`
 
 ## Trocar o modelo da IA
-`python listar_modelos.py` mostra os modelos disponíveis. Depois coloque `GROQ_MODEL=<id>` no `.env`.
+`python scripts/listar_modelos.py` mostra os modelos disponíveis. Depois coloque `GROQ_MODEL=<id>` no `.env`.
 
 O bot usa um modelo reserva (`GROQ_FALLBACK_MODEL`) quando o limite do principal acaba.
 
 ## Estrutura
 ```
-main.py            inicia o bot e carrega os cogs
-config.py          todas as configurações
-ai/persona.py      monta o prompt (personalidade + conhecimento)
-ai/conhecimento.py lê e grava os fatos do servidor
-data/              personalidade.txt (otimizada), personalidade_original.txt (backup) e conhecimento.txt
-ai/groq_client.py  conversa com a Groq, histórico por pessoa
-cogs/ia.py         responde menções e replies
-cogs/ensinar.py    comandos +ensinar, +conhecimento, +esquecer
-cogs/apelidos.py   Guest -> [Cl]
-cogs/status.py     status rotativos
-utils/             cooldown e limpeza de texto
+Legacianna/
+├── main.py                 inicia o bot e carrega os cogs
+├── config.py               todas as configurações
+├── requirements.txt
+├── .env.example            modelo do .env (copie para .env)
+│
+├── ai/
+│   ├── groq_client.py      conversa com a Groq, histórico por pessoa
+│   ├── persona.py          monta o prompt (personalidade + conhecimento)
+│   └── conhecimento.py     lê e grava os fatos do servidor
+│
+├── cogs/
+│   ├── ia.py               responde menções e replies
+│   ├── ensinar.py          +ensinar, +conhecimento, +esquecer
+│   ├── apelidos.py         Guest -> [Cl]
+│   └── status.py           status rotativos
+│
+├── utils/
+│   ├── cooldown.py         limites de resposta
+│   ├── permissoes.py       checagem de administrador
+│   └── text_cleaning.py    limpeza do texto da IA
+│
+├── data/
+│   ├── personalidade.txt   personalidade (versão otimizada)
+│   ├── conhecimento.txt    fatos do servidor
+│   └── backup/             personalidade_original.txt
+│
+└── scripts/
+    └── listar_modelos.py   lista os modelos disponíveis na Groq
 ```
