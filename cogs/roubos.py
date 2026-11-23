@@ -12,7 +12,7 @@ from discord.ext import commands, tasks
 LOGGER = logging.getLogger(__name__)
 QUEUE = "LegacyRobberyLogs_v1"
 LOCATIONS = {
-    "Bank": "Banco Legacy · caixa registradora",
+    "Bank": "Banco Legacy",
     "Bar": "Bar Legacy · caixa registradora",
     "ATM": "Caixa eletrônico",
     "Vault": "Banco Legacy · cofre",
@@ -33,13 +33,13 @@ def formatar_registro(item):
 
     location = LOCATIONS[event["kind"]]
     timestamp = event.get("timestamp")
-    horario = f"<t:{timestamp}:t> " if type(timestamp) is int and timestamp > 0 else ""
-    linha = f"{horario}**{location}** · Assalto confirmado"
+    horario = f"<t:{timestamp}:t>  │  " if type(timestamp) is int and timestamp > 0 else ""
+    linhas = [f"{horario}**{location}**", "> ◈ Assalto confirmado"]
     username = event.get("username")
     if isinstance(username, str) and username.strip():
         nome = discord.utils.escape_markdown(username[:20])
-        linha += f" · {nome}"
-    return linha
+        linhas.append(f"> ⊹ {nome} (assaltante)")
+    return "\n".join(linhas)
 
 
 class Roubos(commands.Cog):
@@ -110,7 +110,7 @@ class Roubos(commands.Cog):
             if not isinstance(canal, discord.abc.Messageable):
                 raise ValueError("o canal de roubos não aceita mensagens")
             await canal.send(
-                "**Registros de roubos · Roblox**\n" + "\n".join(linhas),
+                "**REGISTROS DE ROUBO**\n\n" + "\n\n".join(linhas),
                 allowed_mentions=discord.AllowedMentions.none(),
             )
 
