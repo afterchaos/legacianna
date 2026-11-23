@@ -13,6 +13,7 @@ from discord.ext import commands, tasks
 
 LOGGER = logging.getLogger(__name__)
 QUEUE = "LegacyRobberyLogs_v1"
+COMBAT_QUEUE = "LegacyCombatLogs_v1"
 AVATAR_URL = "https://thumbnails.roblox.com/v1/users/avatar"
 USERNAME_URL = "https://users.roblox.com/v1/usernames/users"
 LOCATIONS = {
@@ -24,12 +25,17 @@ LOCATIONS = {
 }
 
 
-def ler_assalto(item):
+def ler_dados(item):
     event = item.get("data")
     if isinstance(event, str):
         event = json.loads(event)
     if not isinstance(event, dict):
         raise ValueError("formato de evento inválido")
+    return event
+
+
+def ler_assalto(item):
+    event = ler_dados(item)
     if event.get("action") == "loot":
         return None
     if event.get("action") != "start":
@@ -37,6 +43,13 @@ def ler_assalto(item):
 
     if event.get("kind") not in LOCATIONS:
         raise ValueError("local do assalto desconhecido")
+    return event
+
+
+def ler_eliminacao(item):
+    event = ler_dados(item)
+    if event.get("action") != "kill":
+        raise ValueError("tipo de evento de combate desconhecido")
     return event
 
 
@@ -52,12 +65,35 @@ def montar_embed(event, avatar=None):
         description=descricao,
         colour=0xE53935,
     )
+    completar_embed(embed, event, avatar)
+    return embed
+
+
+def montar_embed_combate(event, avatar=None):
+    campos = (
+        ("Jogador eliminado", event.get("victim")),
+        ("Eliminado por", event.get("username")),
+        ("Arma usada", event.get("weapon")),
+    )
+    linhas = []
+    for rotulo, valor in campos:
+        texto = " ".join(valor.replace("`", "").split())[:64] if isinstance(valor, str) else ""
+        linhas.append(f"**{rotulo}:** `{texto or 'Não identificado'}`")
+    embed = discord.Embed(
+        title="RELATÓRIO DE COMBATE",
+        description="\n".join(linhas),
+        colour=0xE53935,
+    )
+    completar_embed(embed, event, avatar)
+    return embed
+
+
+def completar_embed(embed, event, avatar):
     timestamp = event.get("timestamp")
     if type(timestamp) is int and 0 < timestamp <= 253402300799:
         embed.timestamp = datetime.fromtimestamp(timestamp, timezone.utc)
     if avatar:
         embed.set_thumbnail(url=avatar)
-    return embed
 
 
 def usuario_do_evento(evento):
@@ -65,13 +101,13 @@ def usuario_do_evento(evento):
     return nome.lower() if isinstance(nome, str) and re.fullmatch(r"[A-Za-z0-9_]{1,20}", nome) else None
 
 
-class Roubos(commands.Cog):
+class RegistrosRoblox(commands.Cog):
     def __init__(self, bot, universo, canal_id, chave):
         self.bot = bot
         self.canal_id = canal_id
         self.url = (
             f"https://apis.roblox.com/cloud/v2/universes/{universo}"
-            f"/memory-store/queues/{quote(QUEUE, safe='')}"
+            f"/memory-store/queues/{quote(self.fila, safe='')}"
         )
         self.chave = chave
         self.sessao = None
@@ -197,21 +233,21 @@ class Roubos(commands.Cog):
         eventos = []
         for item in itens:
             try:
-                evento = ler_assalto(item)
+                evento = self.ler_evento(item)
                 if evento is not None:
                     eventos.append(evento)
             except (KeyError, ValueError, TypeError, AttributeError, OverflowError):
-                LOGGER.warning("Evento inválido recebido na fila de roubos.")
+                LOGGER.warning("Evento inválido recebido na fila %s.", self.fila)
 
         if eventos:
             canal = self.bot.get_channel(self.canal_id)
             if canal is None:
                 canal = await self.bot.fetch_channel(self.canal_id)
             if not isinstance(canal, discord.abc.Messageable):
-                raise ValueError("o canal de roubos não aceita mensagens")
+                raise ValueError("o canal de registros não aceita mensagens")
             ids = await self.resolver_ids(eventos)
             fotos = await self.buscar_avatares(ids)
-            embeds = [montar_embed(evento, fotos.get(user_id)) for evento, user_id in zip(eventos, ids)]
+            embeds = [self.montar_mensagem(evento, fotos.get(user_id)) for evento, user_id in zip(eventos, ids)]
             await canal.send(
                 embeds=embeds,
                 allowed_mentions=discord.AllowedMentions.none(),
@@ -227,7 +263,7 @@ class Roubos(commands.Cog):
         except (aiohttp.ClientError, asyncio.TimeoutError, discord.HTTPException, ValueError) as erro:
             mensagem = str(erro)
             if mensagem != self.ultimo_erro:
-                LOGGER.warning("Falha na integração de roubos: %s", mensagem)
+                LOGGER.warning("Falha na integração da fila %s: %s", self.fila, mensagem)
             self.ultimo_erro = mensagem
         else:
             self.ultimo_erro = None
@@ -237,11 +273,26 @@ class Roubos(commands.Cog):
         await self.bot.wait_until_ready()
 
 
+class Roubos(RegistrosRoblox):
+    fila = QUEUE
+    ler_evento = staticmethod(ler_assalto)
+    montar_mensagem = staticmethod(montar_embed)
+
+
+class Combate(RegistrosRoblox):
+    fila = COMBAT_QUEUE
+    ler_evento = staticmethod(ler_eliminacao)
+    montar_mensagem = staticmethod(montar_embed_combate)
+
+
 async def setup(bot: commands.Bot):
     universo = os.getenv("ROBLOX_UNIVERSE_ID", "")
-    canal_id = os.getenv("ROBBERY_LOG_CHANNEL_ID", "")
     chave = os.getenv("ROBLOX_OPEN_CLOUD_KEY", "")
-    if not (universo.isdecimal() and canal_id.isdecimal() and chave):
-        LOGGER.info("Logs de roubos desativados. Configure as variáveis do Roblox e do canal.")
+    if not (universo.isdecimal() and chave):
+        LOGGER.info("Logs do Roblox desativados. Configure o universo e a chave.")
         return
-    await bot.add_cog(Roubos(bot, universo, int(canal_id), chave))
+
+    for cog, variavel in ((Roubos, "ROBBERY_LOG_CHANNEL_ID"), (Combate, "KILL_LOG_CHANNEL_ID")):
+        canal_id = os.getenv(variavel, "")
+        if canal_id.isdecimal() and int(canal_id) > 0:
+            await bot.add_cog(cog(bot, universo, int(canal_id), chave))
