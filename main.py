@@ -7,7 +7,7 @@ import config
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-8s %(name)s %(message)s")
 
-EXTENSOES = ("cogs.apelidos", "cogs.status", "cogs.ia", "cogs.ensinar")
+EXTENSOES = ("cogs.apelidos", "cogs.status", "cogs.ia", "cogs.ensinar", "cogs.roubos")
 
 
 class Legacianna(commands.Bot):
